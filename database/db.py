@@ -6,6 +6,6 @@ def get_db():
         host="switchback.proxy.rlwy.net",
         port=24248,
         user="root",
-        password="uibnigOljguaWILElKepIdbRPyxjKesp",
+        password=os.getenv("PASS_WORD"),
         database="railway"
     )

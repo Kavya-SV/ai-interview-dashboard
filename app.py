@@ -4,6 +4,8 @@ from flask import Flask, render_template, request
 import PyPDF2
 import uuid
 import time
+from sendgrid import SendGridAPIClient
+from sendgrid.helpers.mail import Mail
 import smtplib
 from email.mime.text import MIMEText
 from utils.resume_parser import extract_skills
@@ -38,12 +40,16 @@ def login_required(f):
 
 def send_otp(email, otp):
     try:
-        resend.Emails.send({
-            "from": "interviewhireiq.ai@gmail.com",
-            "to": email,
-            "subject": "Password Reset OTP",
-            "html": f"<h3>Your OTP is: {otp}</h3>"
-        })
+        message = Mail(
+            from_email='interviewhireiq.ai@gmail.com',  # verified sender
+            to_emails=email,
+            subject='Password Reset OTP',
+            html_content=f'<h3>Your OTP is: {otp}</h3>'
+        )
+
+        sg = SendGridAPIClient(os.getenv("SENDGRID_API"))
+        sg.send(message)
+
         return True
     except Exception as e:
         print("EMAIL ERROR:", e)

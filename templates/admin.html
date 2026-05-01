@@ -1,0 +1,8 @@
+<h2>All Resumes (Admin)</h2>
+
+{% for r in data %}
+    <p>
+        User: {{ r.user_id }} |
+        <a href="/view_resume/{{ r.id }}">View</a>
+    </p>
+{% endfor %}

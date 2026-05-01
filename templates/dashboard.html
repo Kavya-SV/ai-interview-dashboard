@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+
+    <style>
+    body{
+        margin: 0;
+        height: 100vh;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-family: Arial, Helvetica, sans-serif;
+        background-image: url(https://depositphotos-blog.s3.eu-west-1.amazonaws.com/uploads/2017/07/Soothing-nature-backgrounds-2.jpg);
+        background-size: cover;
+    }
+    .container{
+        width: 90%;
+        max-width: 420px;
+        background: rgba(255, 255, 255, 0.2); 
+        backdrop-filter: blur(3px);
+        padding: 30px;
+        border-radius: 12px;
+        text-align: center;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    }
+    h2{
+        text-align: center;
+    }
+
+    input, button{
+        width: 70%;
+        padding: 20px;
+        margin-top: 10px;
+        border-radius: 30px;
+        border-width: 10px;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+        background: transparent;
+        color: black;
+        backdrop-filter: blur(2px);
+    }
+    button{
+        background: green;
+        color: black;
+        border: none;
+        cursor: pointer;
+        padding: 10px;
+        width: 30%;
+        padding: 10px;
+        margin-top: 10px;
+        border-radius: 6px;
+        border: none
+    }
+
+    button:hover{
+        background-color: aqua;
+    }
+    .links{
+        text-align: center;
+    }
+    a:hover{
+        cursor: pointer;
+        color: gray;
+    }
+    .toddle{
+        margin-top: 15px;
+        color: black;
+        cursor: pointer;
+    }
+    a {
+        color: black;
+        text-decoration: none;
+    }
+    .upload-box {
+        width: 70%;
+        max-width: 420px;
+        margin: 20px auto;   /* center horizontally */
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        padding: 15px;
+        border-radius: 12px;
+        border: 2px dashed rgba(255,255,255,0.6);
+        background: rgba(255,255,255,0.15);
+        backdrop-filter: blur(3px);
+
+        text-align: center;
+    }
+
+    .upload-box:hover {
+        background: rgba(255,255,255,0.25);
+        border-color: white;
+    }
+    .delete-btn{
+        position: fixed;   
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+    }
+
+    .delete-btn button{
+        width: 180px;
+        background: red;
+        color: white;
+        border: none;
+        padding: 12px 18px;
+        border-radius: 10px;
+        cursor: pointer;
+        font-weight: bold;
+
+        white-space: nowrap;   
+    }
+    .delete-btn button:hover{
+        background: darkred;
+        transform: scale(1.05);
+    }
+
+    </style>
+
+</head>
+<body>
+    <div class="container">
+        {% if session.get('username') == "Kavya" %}
+            <a href="/admin">
+                <button>View All Resumes</button>
+            </a>
+        {% endif %}
+        <h2>AI Interview Questions Dashboard</h2>
+        <h2>Hi, {{session.get('username')}}</h2>
+        <div class="toddle">
+            <form action="/upload" method="POST" enctype="multipart/form-data">
+                <input type="text" name="role" placeholder="Enter aiming role" required>
+                <br>
+                <br><div class="file-upload">
+                    <input type="file" id="fileInput" name="resume" hidden>
+    
+                    <label for="fileInput" class="upload-box">
+                        <span id="fileText">Upload your resume</span>
+                    </label>
+                </div>
+                <br><br><button type="submit" class="toddle">Questions</button>
+            </form>
+        </div>
+
+        <div class="links">
+            <br>
+            <a href="/history">View History</a><br>
+            <a href="/logout">Logout</a>
+        </div>
+    </div>
+    <form action="/delete_account" method="POST" class="delete-btn"
+        onsubmit="return confirm('Are you sure? This will permanently delete your account!')">
+
+        <button style="background:red; color:white;">
+            Delete Account
+        </button>
+
+    </form>
+    <script>
+    document.getElementById("fileInput").addEventListener("change", function() {
+        const fileText = document.getElementById("fileText");
+
+        if (this.files.length > 0) {
+            fileText.innerText = "Uploaded Successfully";
+        } else {
+            fileText.innerText = "Upload your resume";
+        }
+    });
+    </script>
+</body>
+</html>

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Interview Result</title>
+
+    <style>
+        body{
+            margin: 0;
+            min-height: 100vh;
+            font-family: Arial, sans-serif;
+            background-image: url(https://depositphotos-blog.s3.eu-west-1.amazonaws.com/uploads/2017/07/Soothing-nature-backgrounds-2.jpg);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            display: flex;
+            justify-content: center;
+            padding: 40px 0;
+        }
+
+        .container{
+            width: 90%;
+            max-width: 800px;
+            background: rgba(255,255,255,0.15);
+            backdrop-filter: blur(10px);
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+        }
+
+        h2{
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .card{
+            background: rgba(255,255,255,0.25);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover{
+            transform: scale(1.02);
+        }
+
+        textarea{
+            width: 100%;
+            min-height: 140px;
+            border-radius: 8px;
+            border: none;
+            padding: 10px;
+            resize: vertical;
+            margin-top: 10px;
+            outline: none;
+        }
+
+        button{
+            margin-top: 12px;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            border-radius: 8px;
+            background: #00bcd4;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover{
+            background: #0097a7;
+        }
+
+        .result{
+            margin-top: 12px;
+            padding: 10px;
+            border-radius: 8px;
+            background: rgba(0,0,0,0.1);
+            color: #000;
+        }
+
+        .loading{
+            color: orange;
+            font-style: italic;
+        }
+
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>Interview Questions</h2>
+
+    {% for q in questions %}
+    <div class="card">
+
+        <p><b>{{ q }}</b></p>
+
+        <form class="eval-form">
+            <input type="hidden" name="q" value="{{ q }}">
+            <input type="hidden" name="skill" value="general">
+            <input type="hidden" name="text" value="general">
+            <input type="hidden" name="role" value="general">
+
+            <textarea name="answer" placeholder="Write your answer..." required></textarea>
+
+            <button type="submit">Evaluate</button>
+        </form>
+
+        <div class="result"></div>
+
+    </div>
+    {% endfor %}
+
+</div>
+
+<script>
+document.querySelectorAll(".eval-form").forEach(form => {
+    form.addEventListener("submit", async function(e) {
+        e.preventDefault();
+
+        const resultBox = this.nextElementSibling;
+        resultBox.innerHTML = "<span class='loading'>Evaluating...</span>";
+
+        const formData = new FormData(this);
+
+        const response = await fetch("/evaluate", {
+            method: "POST",
+            body: formData
+        });
+
+        const data = await response.text();
+
+        resultBox.innerHTML = data;
+    });
+});
+</script>
+
+</body>
+</html>

@@ -39,7 +39,7 @@ def login_required(f):
 def send_otp(email, otp):
     try:
         resend.Emails.send({
-            "from": "onboarding@resend.dev",
+            "from": "interviewhireiq.ai@gmail.com",
             "to": email,
             "subject": "Password Reset OTP",
             "html": f"<h3>Your OTP is: {otp}</h3>"

@@ -190,7 +190,8 @@ def view_resume(id):
 
     UPLOAD_FOLDER = os.path.abspath("uploads")
 
-    return send_file(os.path.join(UPLOAD_FOLDER, os.path.basename(data['file_path'])))
+    file_path = data['file_path'].replace("\\", "/")  
+    return send_file(file_path)
 @app.route('/login', methods=['POST'])
 def login():
     username=request.form['username']

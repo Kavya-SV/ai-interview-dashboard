@@ -16,9 +16,11 @@ from functools import wraps
 import os
 from werkzeug.utils import secure_filename
 from flask import send_file
+import resend
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
+resend.api_key = os.getenv("RESEND_API_KEY")
 
 @app.route('/')
 def home():
@@ -33,21 +35,19 @@ def login_required(f):
             return redirect('/signup')
         return f(*args,**kwargs)
     return wrapper
-def send_otp(email,otp):
-    sender="interviewhireiq.ai@gmail.com"
-    app_password=os.getenv("APP_PASSWORD")
 
-    msg= MIMEText(f"""From InterviewHireIQ Website
-                  \nYour OTP is: {otp}""")
-    msg['Subject']="Password Reset OTP"
-    msg['From']= sender
-    msg['To']= email
-
-    server=smtplib.SMTP("smtp.gmail.com", 587)
-    server.starttls()
-    server.login(sender, app_password)
-    server.send_message(msg)
-    server.quit()
+def send_otp(email, otp):
+    try:
+        resend.Emails.send({
+            "from": "onboarding@resend.dev",
+            "to": email,
+            "subject": "Password Reset OTP",
+            "html": f"<h3>Your OTP is: {otp}</h3>"
+        })
+        return True
+    except Exception as e:
+        print("EMAIL ERROR:", e)
+        return False
 @app.route('/admin')
 @login_required
 def admin_dashboard():

@@ -3,11 +3,10 @@ from werkzeug.security import check_password_hash
 from flask import Flask, render_template, request
 import PyPDF2
 import uuid
+import boto3
 import time
 from sendgrid import SendGridAPIClient
 from sendgrid.helpers.mail import Mail
-import smtplib
-from email.mime.text import MIMEText
 from utils.resume_parser import extract_skills
 from utils.question_generator import generate_questions
 from utils.evaluator import evaluate_answer
@@ -17,13 +16,17 @@ from flask import session
 from functools import wraps
 import os
 from werkzeug.utils import secure_filename
-from flask import send_file
 import resend
 
 app = Flask(__name__)
 app.secret_key = os.getenv("SECRET_KEY")
 resend.api_key = os.getenv("RESEND_API_KEY")
-
+s3 = boto3.client(
+    's3',
+    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    region_name=os.getenv("AWS_REGION")
+)
 @app.route('/')
 def home():
     if 'user_id' in session:
@@ -60,7 +63,7 @@ def admin_dashboard():
     conn = get_db()
     cursor = conn.cursor(dictionary=True)
 
-    if not session['is_admin']:
+    if not session.get('is_admin'):
         return "Unauthorized"
     
     cursor.execute("SELECT id, user_id, uploaded_at FROM resumes")
@@ -92,14 +95,24 @@ def upload():
         return "File size exceeded (Max: 50MB)"
     
     filename = str(uuid.uuid4()) + ".pdf"
-    path = os.path.join("uploads", filename)
-    file.save(path)
 
+    s3.upload_fileobj(
+        file,
+        os.getenv("AWS_BUCKET_NAME"),
+        filename,
+        ExtraArgs={
+            "ContentType": file.content_type
+        }
+    )
+
+    file_url = f"https://{os.getenv('AWS_BUCKET_NAME')}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/{filename}"
+
+    file.seek(0)
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
         "INSERT INTO resumes (user_id, file_path) VALUES (%s, %s)",
-        (session['user_id'], path)
+        (session['user_id'], file_url)
     )
     conn.commit()
     conn.close()
@@ -187,11 +200,9 @@ def view_resume(id):
 
     if not data:
         return "Unauthorized"
-
-    UPLOAD_FOLDER = os.path.abspath("uploads")
-
-    file_path = data['file_path'].replace("\\", "/")  
-    return send_file(file_path)
+    
+    file_path = data['file_path'] 
+    return redirect(file_path)
 @app.route('/login', methods=['POST'])
 def login():
     username=request.form['username']

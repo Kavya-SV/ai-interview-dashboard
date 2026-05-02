@@ -74,28 +74,50 @@ def admin_dashboard():
     return render_template("admin.html", data=data)
 UPLOAD_FOLDER = "uploads"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
 @app.route('/upload', methods=['POST'])
 @login_required
 def upload():
     ALLOWED_EXTENSIONS = {'pdf'}
-    MAX_SIZE=50 * 1024* 1024
+    MAX_SIZE = 50 * 1024 * 1024
 
     def allowed_file(filename):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
-    file = request.files['resume']
+
+    file = request.files.get('resume')
     role = request.form['role']
+
+    if not file or file.filename == "":
+        return "No file uploaded"
 
     if not allowed_file(file.filename):
         return "Only PDF allowed"
-    
+
+
     file.seek(0, 2)
     size = file.tell()
     file.seek(0)
     if size > MAX_SIZE:
         return "File size exceeded (Max: 50MB)"
+
     
+    pdf_reader = PyPDF2.PdfReader(file)
+    text = ""
+
+    for page in pdf_reader.pages:
+        extracted = page.extract_text()
+        if extracted:
+            text += extracted
+
+    skills = extract_skills(text)
+    questions = generate_questions(skills, role)
+
+    
+    file.seek(0)
+
     filename = str(uuid.uuid4()) + ".pdf"
 
+    
     s3.upload_fileobj(
         file,
         os.getenv("AWS_BUCKET_NAME"),
@@ -107,7 +129,7 @@ def upload():
 
     file_url = f"https://{os.getenv('AWS_BUCKET_NAME')}.s3.{os.getenv('AWS_REGION')}.amazonaws.com/{filename}"
 
-    file.seek(0)
+    
     conn = get_db()
     cursor = conn.cursor()
     cursor.execute(
@@ -117,29 +139,13 @@ def upload():
     conn.commit()
     conn.close()
 
-    if file:
-        pdf_reader = PyPDF2.PdfReader(file)
-        text = ""
-
-        for page in pdf_reader.pages:
-            extracted = page.extract_text()
-            if extracted:
-                text += extracted
-
-        skills = extract_skills(text)
-
-        questions = generate_questions(skills, role)
-
-        return render_template(
-            "result.html",
-            skills=skills,
-            questions=questions,
-            text=text,
-            role=role
-        )
-
-    return "No file uploaded"
-
+    return render_template(
+        "result.html",
+        skills=skills,
+        questions=questions,
+        text=text,
+        role=role
+    )
 @app.route('/signup',methods=['POST'])
 def signup():
     username = request.form['username']
